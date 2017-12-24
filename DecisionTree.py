@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-img = plt.imread('.\yawen.jpg')
-plt.title('ya wen')
+img = plt.imread('.\SGD.jpg')
+plt.title('Title')
 plt.imshow(img)
 plt.show()
