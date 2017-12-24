@@ -33,18 +33,15 @@ def KNN(X, dataSet, labels, k):
     sqDiffMat = diffMat**2
     sqDistances = sqDiffMat.sum(axis=1)
     distances = sqDistances**0.5
-    print(distances)
 
     # select the top k nearest neighbours
     sortedDistIndicies = np.argsort(distances)
-    print(sortedDistIndicies)
     classCount = {}
     for i in range(k):
         # vote for label i
         voteILabel = labels[sortedDistIndicies[i]]
         classCount[voteILabel] = classCount.get(voteILabel, 0) + 1
 
-    print(classCount)
     # sort the vote result
     sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
 
