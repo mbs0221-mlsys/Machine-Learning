@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import random as rd
 
 
 def loadDataSet():
@@ -21,37 +22,66 @@ def sigmoid(X):
 
 def BatchGradAscent(data, labels):
 
-    dataMat = np.mat(data)
-    labelsMat = np.mat(labels).transpose()
-    m, n = np.shape(dataMat)
+    m, n = np.shape(data)
 
     alpha = 0.001
     maxCycles = 5000
     W = np.ones((n, 1))
     for k in range(maxCycles):
-        H = sigmoid(dataMat * W)
-        E = labelsMat - H
-        W = W + alpha*dataMat.transpose()*E
+        H = sigmoid(data * W)
+        E = labels - H
+        W = W + alpha*data.transpose()*E
 
     return W
 
 
-def StocGradAscent(data, labels):
+def StocGradAscent(data, labels, num_iter=500):
+    """
+    随机梯度上升算法
 
-    dataMat = np.array(data)
-    m, n = np.shape(dataMat)
-    print("%d, %d"%(m, n))
-    alpha = 0.01
+    :param data: 数据集
+    :param labels: 标签
+    :param num_iter: 迭代次数
+    :return:
+    """
+
+    data_mat = np.array(data)
+    m, n = np.shape(data_mat)
+    alpha = 0.01 # 程序清单5-3 随机梯度上升算法
     weights = np.ones(n)
-    for i in range(m):
-        h = sigmoid(sum(dataMat[i]*weights))
-        e = labels[i] - h
-        weights = weights + alpha * e * dataMat[i]
+    for j in range(num_iter):
+        for i in range(m):
+            # 程序清单5-4 改进的随机梯度上升算法
+            alpha = 4 / (1.0 + j + i) + 0.01 # alpha每次迭代时需要调整
+            rand_index = int(rd.uniform(0, len(labels))) # 随机选取更新
+            h = sigmoid(sum(data_mat[rand_index]*weights))
+            e = labels[rand_index] - h
+            weights = weights + alpha * e * data_mat[rand_index]
 
     return weights
 
 
+def classifyVector(X, weights):
+    """
+    程序清单5-5 Logistic回归分类函数
+
+    :param X: 样本
+    :param weights: 权重向量
+    :return: 分类标签
+    """
+    prob = sigmoid(sum(X*weights))
+    if prob > 0.5:
+        return 1.0
+    else:
+        return 0.0
+
+
 def plotBestFit(W):
+    """
+    程序清单5-2 画出数据集和Logistic回归最佳拟合直线的函数
+    :param W: 权重向量
+    :return: 无
+    """
 
     data, labels = loadDataSet()
     x0, y0 = [], []
@@ -69,6 +99,12 @@ def plotBestFit(W):
     ax = fig.add_subplot(111)
     ax.scatter(x0, y0, s=3, c='cyan', marker='s')
     ax.scatter(x1, y1, s=3, c='blue')
+    # test classifier
+    error = 0.0
+    for i in range(len(labels)):
+        if classifyVector(data[i], W) != labels[i]:
+            error += 1
+    print("error rate:%.2f"%(error/len(labels)))
     # plot regression line
     x = np.arange(-4.0, 4.0, 0.1)
     y = (-W[0]-W[1]*x)/W[2]
@@ -78,9 +114,10 @@ def plotBestFit(W):
     # X-Y coordinates
     plt.xlabel('X')
     plt.ylabel('Y')
-    plt.savefig('./images/LR_BGD.jpg')
+    plt.savefig('./images/LC_SGD_Improve.jpg')
     plt.show()
 
+
 data, labels = loadDataSet()
-W = BatchGradAscent(data, labels)
+W = StocGradAscent(data, labels, 40)
 plotBestFit(W)
