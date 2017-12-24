@@ -1,5 +1,8 @@
 import numpy as np
 import re
+import random
+import feedparser as fd
+import operator as op
 
 
 def loadRawDataSet():
@@ -155,3 +158,94 @@ def testingNB():
         data = testEntry.split(' ')
         vec = setOfWords2Vec(vocabList, data)
         print("test entry classified as: ", classifyNB(vec, p0v, p1v, pAb))
+
+
+def textParse(bigString):
+    """
+    text parser
+
+    :param bigString:
+    :return:
+    """
+    tokens = re.split('\W+', bigString)
+    return [tok.lower() for tok in tokens if len(tok) > 2]
+
+
+def spamTest():
+    """
+    test our naive bayes classifier on spam email
+    :return:
+    """
+
+    docList = []
+    classList = []
+    fullText = []
+    for i in range(1, 26):
+        wordList = textParse(bigString=open('email/spam/%d.txt'%(i)).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        wordList = textParse(bigString=open('email/ham/%d.txt'%(i)).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+
+    vocabList = createVocabList(docList)
+    trainingSet = range(50)
+    testSet = []
+    for i in range(10):
+        randIndex = int(random.uniform(0, len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        del (trainingSet[randIndex])
+    train, labels = [], []
+    for docIndex in trainingSet:
+        train.append(setOfWords2Vec(vocabList, docList[docIndex]))
+        labels.append(classList[docIndex])
+
+    p0v, p1v, pSpam = trainNaiveBayes(train, labels)
+    errorCount = 0
+    for docIndex in testSet:
+        wordVec = setOfWords2Vec(vocabList, docList[docIndex])
+        if classifyNB(wordVec, p0v, p1v, pSpam) != classList[docIndex]:
+            errorCount += 1
+
+    print("The error rate is: %d"%(float(errorCount)/len(testSet)))
+
+
+def calcMostFreq(vocabList, fullText):
+    """
+    return top-30 words with most frequency
+
+    :param vocabList:
+    :param fullText:
+    :return:
+    """
+
+    freqDict = {}
+    for token in vocabList:
+        freqDict[token] = fullText.count(token)
+    sortedFreq = sorted(freqDict.iteritems(), key=op.itemgetter(1), reverse=True)
+
+    return sortedFreq[:30]
+
+
+def localWords(feeds):
+
+    docList = []
+    fullText = []
+    for feed in feeds:
+        for entry in feed['entries']:
+            wordList = textParse(entry['summary'])
+            docList.append(wordList)
+            fullText.extend(wordList)
+
+    vocabList = createVocabList(docList)
+    top30Words = calcMostFreq(vocabList, fullText)
+
+    for pair in top30Words:
+        if pair[0] in vocabList:
+            vocabList.remove(pair[0])
+
+    """
+    TODO:
+    """
