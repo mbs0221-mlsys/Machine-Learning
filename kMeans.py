@@ -54,7 +54,7 @@ def randomCenter(data_set, k):
 
 def kMeans(dataSet, k, measure=distEuclid, createCenter=randomCenter):
     """
-    K-均值算法
+    程序清单10-2 K-均值聚类算法
 
     :param dataSet: 数据集
     :param k: 簇数
@@ -92,8 +92,52 @@ def kMeans(dataSet, k, measure=distEuclid, createCenter=randomCenter):
     return centroids, clusterAssign
 
 
+def biKMeans(dataSet, k, measure=distEuclid):
+    """
+    程序清单10-3 二分K-均值聚类算法
+
+    :param dataSet: 数据集
+    :param k: 簇数
+    :param measure: 度量
+    :return: 聚类中心，簇划分列表
+    """
+    m, n = np.shape(dataSet)
+    clusterAssign = np.mat(np.zeros((m, 2)))
+    # 1-创建一个初始簇
+    center = np.mean(dataSet, axis=0).tolist()[0]
+    centers = [center]
+    for j in range(m):
+        clusterAssign[j, 1] = measure(np.mat(center), dataSet[j, :]) ** 2
+    while len(centers) < k:
+        lowestSSE = np.inf
+        for i in range(len(centers)):
+            # 2-尝试划分每一簇
+            ptInCurrCluster = dataSet[np.nonzero(clusterAssign[:, 0] == i)[0], :]
+            centerMat, splitClusterAss = kMeans(ptInCurrCluster, 2, measure)
+            sseSplit = sum(splitClusterAss[:, 1])
+            sseNotSplit = sum(clusterAssign[np.nonzero(clusterAssign[:, 0] != i)[0], i])
+            print('split and not split: ', sseSplit, sseNotSplit)
+            if sseSplit + sseNotSplit < lowestSSE:
+                bestCentToSplit = i
+                bestNewCenters = centerMat
+                bestClusterAss = splitClusterAss.copy()
+                lowestSSE = sseSplit + sseNotSplit
+        # 3-更新簇的分配结果
+        bestClusterAss[np.nonzero(bestClusterAss[:, 0] == 1)[0], 0] = len(centers)
+        bestClusterAss[np.nonzero(bestClusterAss[:, 0] == 0)[0], 0] = bestCentToSplit
+        print('the best center to split is : ', bestCentToSplit)
+        print('the len of best cluster assign is : ', len(bestClusterAss))
+        centers[bestCentToSplit] = bestNewCenters[0, :]
+        centers.append(bestNewCenters[1, :])
+        clusterAssign[np.nonzero(clusterAssign[:, 0] == bestCentToSplit)[0], :] = bestClusterAss
+    return np.mat(centers), clusterAssign
+
+
 # 在wine数据集上做聚类测试
 data, labels = loadClsDataSet('./dataset/wine/wine.data')
 centroids, clusterAssign = kMeans(data, 3)
+print(centroids)
+print(clusterAssign)
+centroids, clusterAssign = biKMeans(data, 3)
 print(centroids)
 print(clusterAssign)
