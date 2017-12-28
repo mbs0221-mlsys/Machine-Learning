@@ -1,4 +1,9 @@
 import numpy as np
+import urllib
+import json
+from time import sleep
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 def loadClsDataSet(file, delim=','):
@@ -131,6 +136,104 @@ def biKMeans(dataSet, k, measure=distEuclid):
         centers.append(bestNewCenters[1, :])
         clusterAssign[np.nonzero(clusterAssign[:, 0] == bestCentToSplit)[0], :] = bestClusterAss
     return np.mat(centers), clusterAssign
+
+
+def geoGrab(address, city):
+    """
+    程序清单10-4 Yahoo! PlaceFinder API
+
+    :param address: 地址
+    :param city: 城市
+    :return: JSON数据
+    """
+    apiStem = 'http://where.yahooapis.com/geocode?'
+    params = {
+        'flags': 'J',
+        'appid': 'ppp68N8t',
+        'location': '%s %s' % (address, city)
+    }
+    url_params = urllib.urlencode(params)
+    yahooApi = apiStem + url_params
+    print(yahooApi)
+    c = urllib.open(yahooApi)
+    return json.load(c.read())
+
+
+def massPlaceFind(filename):
+    """
+    程序清单10-4 Yahoo! PlaceFinder API
+
+    :param filename: 文件名
+    :return: 无
+    """
+    fr = open(filename)
+    fw = open('places.txt', 'w')
+    for line in fr.readlines():
+        line = line.strip()
+        other, address, city = line.split('\t')
+        retDict = geoGrab(address, city)
+        ResultSet = retDict['ResultSet']
+        if ResultSet['Error'] == 0:
+            Results = ResultSet['Results']
+            lat = np.float(Results[0]['latitude'])
+            long = np.float(Results[0]['longitude'])
+            print(other, lat, long)
+            fw.write('%s\t%f\t%f\n' % (line, lat, long))
+        else:
+            print('error fetching')
+        sleep(1)
+    fw.close()
+    fr.close()
+
+
+def distSLC(vecA, vecB):
+    """
+    程序清单10-5 球面距离计算
+
+    :param vecA: 球面坐标A
+    :param vecB: 球面坐标B
+    :return: 球面距离
+    """
+    a = np.sin(vecA[0, 1] * np.pi / 180) * np.sin(vecB[0, 1] * np.pi / 180)
+    b = np.cos(vecA[0, 1] * np.pi / 180) * np.cos(vecB[0, 1] * np.pi / 180)
+    return np.arccos(a + b) / 6371.0
+
+
+def clusterClubs(numCluster=5):
+    """
+    程序清单10-5 聚类测试
+
+    :param numCluster: 簇数
+    :return: 无
+    """
+    # 读取文件数据
+    fr = open('places.txt')
+    data = []
+    for line in fr.readlines():
+        strArr = line.split('\t')
+        data.append([float(strArr[4]), float(strArr[3])])
+    dataMat = np.mat(data)
+    # 二分K-均值聚类
+    centers, clusterAssign = biKMeans(dataMat, numCluster, measure=distSLC)
+    # 图表绘制
+    fig = plt.figure()
+    # 设置区域、标记
+    rect = [0.1, 0.1, 0.8, 0.8]
+    scatterMarkers = ['s', 'o', '^', '8', 'p', 'd', 'v', 'h', '>', '<']
+    axprops = dict(xticks=[], yticks=[])
+    # 绘制背景
+    ax0 = fig.add_axes(rect, label='ax0', **axprops)
+    imgP = plt.imread('Portland.png')
+    ax0.imshow(imgP)
+    # 绘制数据点
+    ax1 = fig.add_axes(rect, label='ax1', frameon=False)
+    for i in range(numCluster):
+        pstInCurrCluster = dataMat[np.nonzero(clusterAssign[:, 0] == i), :]
+        markerStyle = scatterMarkers[i % len(scatterMarkers)]
+        ax1.scatter(pstInCurrCluster[:, 0].flatten().A[0], pstInCurrCluster[:, 1].flatten().A[0], marker=markerStyle, s=90)
+    # 绘制聚类中心
+    ax1.scatter(centers[:, 0].flatten().A[0], centers[:, 1].flatten().A[0], marker='+', s=300)
+    plt.show()
 
 
 # 在wine数据集上做聚类测试
