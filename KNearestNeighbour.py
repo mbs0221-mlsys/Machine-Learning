@@ -1,31 +1,27 @@
-import numpy as np
 import operator
+import numpy as np
 
-from StatModal import StatModal
 
-
-class KNN(StatModal):
+class KNN():
     def __init__(self, n_neighbours):
         self.dataSet = None
         self.n_neighbours = n_neighbours
 
-    def fit(self, dataSet):
-        self.dataSet = dataSet
+    def fit(self, data_set):
+        self.dataSet = data_set
 
     def predict(self, X):
         """
         K Nearest Neighbour algorithm
 
         :param X:
-        :param dataSet: array of dimensions m*n
-        :param labels: training labels of
-        :param k: the number of nearest neighbour
         :return: which class X belongs to
         """
-        dataSetSize = self.dataSet.shape[0]
+        data, labels = self.dataSet
+        m, n = np.shape(data)
 
         # calculate distances between X and object in dataSet
-        diffMat = np.tile(X, (dataSetSize, 1)) - self.dataSet
+        diffMat = np.tile(X, (m, 1)) - data
         sqDiffMat = diffMat ** 2
         sqDistances = sqDiffMat.sum(axis=1)
         distances = sqDistances ** 0.5
@@ -59,6 +55,25 @@ def loadDataSet():
     return group, labels
 
 
-data, labels = loadDataSet()
-label = KNN((0.1, 0.1), data, labels, 3)
-print(label)
+def loadFile(file, delim=' '):
+    fp = open(file)
+    strArr = fp.readlines()
+    data, labels = [], []
+    for line in strArr:
+        words = line.strip().split(delim)
+        data.append(np.array(words[1:], dtype=float))
+        labels.append(words[0])
+    return data, labels
+
+
+data, labels = loadFile('dataset/wine/wine.data', delim=',')
+X = [
+    14.37, 11.95, 12.5, 16.8, 113,
+    13.85, 13.49, 10.24, 12.18, 17.8,
+    10.86, 13.45, 1480
+]
+
+clf = KNN(12)
+clf.fit((data, labels))
+result = clf.predict(X)
+print('The prediction of X is ', result)

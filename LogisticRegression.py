@@ -4,24 +4,32 @@ import matplotlib.pyplot as plt
 import random as rd
 
 
-def loadDataSet():
+def loadRegDataSet(file, delim=','):
+    fp = open(file)
+    strArr = fp.readlines()
+    data = []
+    for line in strArr[1:]:
+        words = line.strip().split(delim)
+        data.append(np.array(words[:-1], dtype=float))
+    return data
 
+
+def loadClsDataSet(file, delim=','):
+    fp = open(file)
+    strArr = fp.readlines()
     data, labels = [], []
-    file = open('./dataset/LR.txt')
-    for line in file.readlines():
-        words = line.strip().split()
-        data.append([1.0, float(words[0]), float(words[1])])
-        labels.append(int(words[2]))
-
+    for line in strArr[1:]:
+        words = line.strip().split(delim)
+        data.append(np.array(words[1:], dtype=float))
+        labels.append(np.int(words[0]))
     return data, labels
 
 
 def sigmoid(X):
-    return 1.0/(1+np.exp(-X))
+    return 1.0 / (1 + np.exp(-X))
 
 
 def BatchGradAscent(data, labels):
-
     m, n = np.shape(data)
 
     alpha = 0.001
@@ -30,7 +38,7 @@ def BatchGradAscent(data, labels):
     for k in range(maxCycles):
         H = sigmoid(data * W)
         E = labels - H
-        W = W + alpha*data.transpose()*E
+        W = W + alpha * data.transpose() * E
 
     return W
 
@@ -47,14 +55,14 @@ def StocGradAscent(data, labels, num_iter=500):
 
     data_mat = np.array(data)
     m, n = np.shape(data_mat)
-    alpha = 0.01 # 程序清单5-3 随机梯度上升算法
+    alpha = 0.01  # 程序清单5-3 随机梯度上升算法
     weights = np.ones(n)
     for j in range(num_iter):
         for i in range(m):
             # 程序清单5-4 改进的随机梯度上升算法
-            alpha = 4 / (1.0 + j + i) + 0.01 # alpha每次迭代时需要调整
-            rand_index = int(rd.uniform(0, len(labels))) # 随机选取更新
-            h = sigmoid(sum(data_mat[rand_index]*weights))
+            alpha = 4 / (1.0 + j + i) + 0.01  # alpha每次迭代时需要调整
+            rand_index = int(rd.uniform(0, len(labels)))  # 随机选取更新
+            h = sigmoid(sum(data_mat[rand_index] * weights))
             e = labels[rand_index] - h
             weights = weights + alpha * e * data_mat[rand_index]
 
@@ -69,7 +77,7 @@ def classifyVector(X, weights):
     :param weights: 权重向量
     :return: 分类标签
     """
-    prob = sigmoid(sum(X*weights))
+    prob = sigmoid(sum(X * weights))
     if prob > 0.5:
         return 1.0
     else:
@@ -83,16 +91,16 @@ def plotBestFit(W):
     :return: 无
     """
 
-    data, labels = loadDataSet()
+    data, labels = loadClsDataSet('./dataset/wine/wine.data', ',')
     x0, y0 = [], []
     x1, y1 = [], []
     for i in range(len(labels)):
         if int(labels[i]) == 0:
-            x0.append(data[i][1])
-            y0.append(data[i][2])
+            x0.append(data[i][2])
+            y0.append(data[i][3])
         else:
-            x1.append(data[i][1])
-            y1.append(data[i][2])
+            x1.append(data[i][2])
+            y1.append(data[i][3])
 
     fig = plt.figure()
     # plot raw data
@@ -104,10 +112,10 @@ def plotBestFit(W):
     for i in range(len(labels)):
         if classifyVector(data[i], W) != labels[i]:
             error += 1
-    print("error rate:%.2f"%(error/len(labels)))
+    print("error rate:%.2f" % (error / len(labels)))
     # plot regression line
     x = np.arange(-4.0, 4.0, 0.1)
-    y = (-W[0]-W[1]*x)/W[2]
+    y = (-W[0] - W[3] * x) / W[2]
     x = x.reshape((80, 1))
     y = y.reshape((80, 1))
     ax.plot(x, y)
@@ -118,6 +126,7 @@ def plotBestFit(W):
     plt.show()
 
 
-data, labels = loadDataSet()
-W = StocGradAscent(data, labels, 40)
+data, labels = loadClsDataSet('./dataset/wine/wine.data', ',')
+W = StocGradAscent(data, labels, 400)
+print(W)
 plotBestFit(W)

@@ -1,17 +1,24 @@
 import numpy as np
 
 
-def loadDataSet(file):
+def loadClsDataSet(file, delim=','):
+    """
+    加载分类数据集
 
-    dataMat = []
-    fin = open(file)
-
-    for line in fin.readlines():
-        words = line.strip().split()
-        floatLine = [float(words[0]), float(words[1])]
-        dataMat.append(floatLine)
-
-    return dataMat
+    :param file: 文件名
+    :param delim: 数值分隔符
+    :return: 数据集
+    """
+    fp = open(file)
+    strArr = fp.readlines()
+    data, labels = [], []
+    for line in strArr[1:]:
+        words = line.strip().split(delim)
+        data.append(np.array(words[1:], dtype=float))
+        labels.append(np.int(words[0]))
+    data = np.array(data)
+    labels = np.array(labels)
+    return data, labels
 
 
 def distEuclid(X, Y):
@@ -25,34 +32,32 @@ def distEuclid(X, Y):
     return np.sqrt(np.sum(np.power(np.subtract(X, Y), 2)))
 
 
-def randomCenter(dataSet, k):
+def randomCenter(data_set, k):
     """
     程序清单10-1 K-均值聚类支持函数
 
-    :param dataSet: 数据集
-    :param k:
-    :return:
+    :param data_set: 数据集
+    :param k: 随机质心数目
+    :return: k个随机生成的质心
     """
-    m, n = np.shape(dataSet)
 
-    centroids = np.zeros((k, n))
+    m, n = np.shape(data_set)
+    center = np.zeros((k, n))
 
     for j in range(n):
-        minJ = np.min(dataSet, axis=j)
-        rangeJ = np.max(np.array(dataSet), axis=j) - minJ
-        print(rangeJ)
-        rangeJ = np.float(rangeJ)
-        centroids[:, j] = minJ + rangeJ * np.random.rand(k, 1)
+        minJ = np.min(data_set[:, j])
+        rangeJ = np.float(np.max(data_set[:, j]) - minJ)
+        center[:, j] = minJ + rangeJ * np.random.rand(1, k)
 
-    return centroids
+    return center
 
 
 def kMeans(dataSet, k, measure=distEuclid, createCenter=randomCenter):
     """
-    K-Means algorithm
+    K-均值算法
 
     :param dataSet: 数据集
-    :param k: 分类数
+    :param k: 簇数
     :param measure: 测度
     :param createCenter: 初始聚类中心
     :return: 聚类中心，簇划分
@@ -72,27 +77,23 @@ def kMeans(dataSet, k, measure=distEuclid, createCenter=randomCenter):
             for j in range(k):
                 distJI = measure(centroids[j, :], dataSet[i, :])
                 if distJI < minDist:
-                    minDist = distJI, minIndex = j
+                    minDist, minIndex = distJI, j
 
+            # 簇划分发生变化
             if clusterAssign[i][0] != minIndex:
                 clusterChanged = True
             clusterAssign[i, :] = minIndex, minDist ** 2
 
-        print(centroids)
         # 更新质心的位置
-        for center in centroids:
-            pointInCluster = dataSet[np.nonzero(clusterAssign[:,0] == center)]
-            centroids[center, :] = np.mean(pointInCluster, axis=0)
+        for i in range(k):
+            pointInCluster = dataSet[np.nonzero(clusterAssign[:, 0] == i)[0]]
+            centroids[i, :] = np.mean(pointInCluster, axis=0)
 
     return centroids, clusterAssign
 
 
-dist = distEuclid([0.1, 0.1, 0.1], [0.3, 0.3, 0.3])
-print(dist)
-
-data = loadDataSet('./dataset/LR.txt')
-print(data)
-
-centroids, clusterAssign = kMeans(data, 4)
+# 在wine数据集上做聚类测试
+data, labels = loadClsDataSet('./dataset/wine/wine.data')
+centroids, clusterAssign = kMeans(data, 3)
 print(centroids)
 print(clusterAssign)

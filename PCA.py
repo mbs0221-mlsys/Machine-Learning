@@ -4,7 +4,7 @@ import numpy as np
 def loadDataSet(file, delim=' '):
     fp = open(file)
     strArr = [line.strip().split(delim) for line in fp.readlines()]
-    fltArr = [map(float, line) for line in strArr]
+    fltArr = [np.array(line, dtype=float) for line in strArr]
     return np.mat(fltArr)
 
 
