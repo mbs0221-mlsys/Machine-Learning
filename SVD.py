@@ -112,7 +112,7 @@ def SvdEst(data, user, sim, item):
         return ratSimTotal / simTotal
 
 
-def Recommend(data, user, N=3, sim=CosSim, est=StandardEst):
+def recommend(data, user, N=3, sim=CosSim, est=StandardEst):
     """
     程序清单14-2 基于物品相似度的推荐引擎
 
@@ -139,11 +139,11 @@ matrix = loadExData()
 mat = np.mat(matrix)
 
 print('est=SvdEst')
-rec = Recommend(mat, 1, est=SvdEst)
+rec = recommend(mat, 1, est=SvdEst)
 print('Recommend')
 print(rec)
 print('est=SvdEst, sim=PearsonSim')
-rec = Recommend(mat, 1, est=SvdEst, sim=PearsonSim)
+rec = recommend(mat, 1, est=SvdEst, sim=PearsonSim)
 print('Recommend')
 print(rec)
 

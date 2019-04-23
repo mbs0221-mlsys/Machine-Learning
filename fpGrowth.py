@@ -15,7 +15,7 @@ class TreeNode:
             child.display(ind + 1)
 
 
-def updateHeader(nodeToTest, targetNode):
+def update_header(nodeToTest, targetNode):
     """
     更新头结点
 
@@ -28,7 +28,7 @@ def updateHeader(nodeToTest, targetNode):
     nodeToTest.nodeLink = targetNode
 
 
-def updateTree(records, inTree, headerTable, count):
+def update_tree(records, inTree, headerTable, count):
     """
     更新FP树
 
@@ -52,7 +52,7 @@ def updateTree(records, inTree, headerTable, count):
             if headerTable[items[0]][1] is None:
                 headerTable[items[0]][1] = root.children[items[0]]
             else:
-                updateHeader(headerTable[items[0]][1], root.children[items[0]])
+                update_header(headerTable[items[0]][1], root.children[items[0]])
         # 在剩下的项集中迭代
         items.pop(0)
         root = root.children[items[0]]
@@ -61,7 +61,7 @@ def updateTree(records, inTree, headerTable, count):
         #     updateTree(items[1:], inTree.children[items[0]], headerTable, count)
 
 
-def createTree(dataSet, minSup=1):
+def create_tree(dataSet, minSup=1):
     """
     程序清单 12-2 FP树构建函数
 
@@ -100,7 +100,7 @@ def createTree(dataSet, minSup=1):
         # 4-使用排序后的频率项对树进行填充
         if (len(localD)) > 0:
             orderedItems = [v[0] for v in sorted(localD.items(), key=lambda p: p[1], reverse=True)]
-            updateTree(orderedItems, retTree, headerTable, count)
+            update_tree(orderedItems, retTree, headerTable, count)
 
     return retTree, headerTable
 
@@ -138,5 +138,5 @@ def createInitSet(dataSet):
 
 dataSet = loadSimpleDataSet()
 initSet = createInitSet(dataSet)
-fpTree, headerTable = createTree(initSet, 3)
+fpTree, headerTable = create_tree(initSet, 3)
 fpTree.display()
